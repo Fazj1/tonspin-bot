@@ -18,8 +18,6 @@ const STARS_PER_TON = 50;
 // =====================
 
 const bot = new TelegramBot(TOKEN, { polling: true });
-
-// Храним состояние "ожидания суммы" для каждого пользователя
 const waitingForAmount = {};
 
 // ===== /start =====
@@ -47,32 +45,25 @@ bot.on('callback_query', async (query) => {
 
   if (data === 'deposit') {
     await bot.answerCallbackQuery(query.id);
-
     waitingForAmount[chatId] = true;
-
     bot.sendMessage(chatId,
       '✍️ Напиши сколько TON хочешь пополнить.\n\n' +
-      'Например: `1` (это будет 50 ⭐)',
-      { parse_mode: 'Markdown' }
+      'Например: 1 (это будет 50 ⭐)'
     );
   }
 });
 
-// ===== Ожидание суммы в TON =====
+// ===== Ожидание суммы =====
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = (msg.text || '').trim();
-
-  // Игнорируем команды
   if (text.startsWith('/')) return;
-
-  // Только если ждём сумму
   if (!waitingForAmount[chatId]) return;
 
   const ton = parseFloat(text.replace(',', '.'));
 
   if (!ton || ton <= 0) {
-    bot.sendMessage(chatId, '❌ Введи число больше 0. Например: `1`', { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, '❌ Введи число больше 0. Например: 1');
     return;
   }
   if (ton < 0.1) {
@@ -84,13 +75,10 @@ bot.on('message', async (msg) => {
     return;
   }
 
-  // Считаем звёзды
   const stars = Math.round(ton * STARS_PER_TON);
-
   delete waitingForAmount[chatId];
 
   try {
-    // Отправляем invoice
     await bot.sendInvoice(
       chatId,
       'Пополнение баланса',
@@ -115,7 +103,6 @@ bot.on('pre_checkout_query', (q) => {
 bot.on('successful_payment', (msg) => {
   const payload = msg.successful_payment.invoice_payload;
   const parts = payload.split('_');
-  // parts: ['payload', chatId, stars, ton]
   const buyerId = parts[1];
   const stars = parseInt(parts[2], 10);
   const ton = parseFloat(parts[3]);
@@ -144,4 +131,4 @@ bot.on('polling_error', (err) => {
   console.error('Polling error:', err.message);
 });
 
-console.log('🤖 Бот запущен...');
+console.log('🤖 Бот @tonsoldbot запущен...');
