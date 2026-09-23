@@ -1,21 +1,19 @@
 // ===== HTTP-сервер для Render =====
 const http = require('http');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
   res.writeHead(200);
   res.end('Bot is running');
-}).listen(PORT, () => {
-  console.log('HTTP server on port ' + PORT);
+}).listen(PORT, '0.0.0.0', () => {
+  console.log('✅ HTTP server on port ' + PORT);
 });
 // ==================================
 
 const TelegramBot = require('node-telegram-bot-api');
 
-// ===== НАСТРОЙКИ =====
 const TOKEN = '8659566747:AAErTzE0eWs7X3fxgtI-JhnuqoOvEWc7RnQ';
 const ADMIN_ID = 8122378281;
 const STARS_PER_TON = 50;
-// =====================
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 const waitingForAmount = {};
@@ -53,7 +51,7 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-// ===== Ожидание суммы =====
+// ===== Ввод суммы =====
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = (msg.text || '').trim();
@@ -95,7 +93,7 @@ bot.on('message', async (msg) => {
   }
 });
 
-// ===== Подтверждение и оплата =====
+// ===== Подтверждение оплаты =====
 bot.on('pre_checkout_query', (q) => {
   bot.answerPreCheckoutQuery(q.id, true);
 });
@@ -121,10 +119,9 @@ bot.on('successful_payment', (msg) => {
       '💰 НОВАЯ ОПЛАТА!\n\n' +
       '🆔 ID игрока: ' + buyerId + '\n' +
       '⭐ Звёзд: ' + stars + '\n' +
-      '🪙 TON: ' + ton + '\n\n' +
-      'Начисли через админку игры (15 тапов по аватарке → ton2026)'
+      '🪙 TON: ' + ton
     );
-  } catch(e) { console.error('ADMIN notify error:', e.message); }
+  } catch(e) { console.error('ADMIN error:', e.message); }
 });
 
 bot.on('polling_error', (err) => {
